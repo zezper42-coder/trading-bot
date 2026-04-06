@@ -541,18 +541,29 @@ def _render_app_page() -> str:
       gap: 12px;
     }
     .settings-row {
-      display: grid;
-      grid-template-columns: 150px repeat(6, minmax(0, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      align-items: center;
+      align-items: flex-start;
       border-bottom: 1px solid var(--line);
       padding-bottom: 12px;
+    }
+    .settings-row > div:first-child {
+      flex: 1 1 240px;
+      min-width: 240px;
+      padding-right: 8px;
+    }
+    .settings-row > div:not(:first-child) {
+      flex: 1 1 130px;
+      min-width: 130px;
     }
     .settings-row label {
       font-size: 0.78rem;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.10em;
+      display: block;
+      margin-bottom: 4px;
     }
     .settings-row .theme-name {
       font-size: 0.92rem;
@@ -610,9 +621,8 @@ def _render_app_page() -> str:
       .masthead, .workspace, .toolbar {
         grid-template-columns: 1fr;
       }
-      .settings-row {
-        grid-template-columns: 1fr 1fr;
-      }
+      .settings-row > div:first-child { min-width: 100%; }
+      .settings-row > div:not(:first-child) { min-width: 45%; }
     }
   </style>
 </head>
