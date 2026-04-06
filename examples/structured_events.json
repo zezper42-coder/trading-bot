@@ -1,0 +1,36 @@
+[
+  {
+    "event_id": "evt-tsla-earnings-1",
+    "source": "finnhub",
+    "instrument_scope": ["TSLA"],
+    "category": "earnings",
+    "published_at": "2026-04-03T14:20:00Z",
+    "headline": "TSLA beats earnings expectations",
+    "actual_value": 1.5,
+    "expected_value": 1.2,
+    "surprise_score": 0.8,
+    "sentiment_score": 0.3,
+    "confidence_score": 0.9,
+    "is_scheduled": true,
+    "supporting_sources": ["finnhub", "sec_press"],
+    "source_count": 2,
+    "corroboration_score": 2.0
+  },
+  {
+    "event_id": "evt-btc-cpi-1",
+    "source": "finnhub",
+    "instrument_scope": ["BTC/USD"],
+    "category": "macro",
+    "published_at": "2026-04-04T12:25:00Z",
+    "headline": "CPI comes in softer than expected",
+    "actual_value": 2.8,
+    "expected_value": 3.2,
+    "surprise_score": 0.125,
+    "sentiment_score": 0.25,
+    "confidence_score": 0.85,
+    "is_scheduled": true,
+    "supporting_sources": ["finnhub", "fed_monetary"],
+    "source_count": 2,
+    "corroboration_score": 2.0
+  }
+]

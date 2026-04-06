@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/news-shock",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/earnings-scan",
+      "schedule": "5 12 * * 1-5"
+    },
+    {
+      "path": "/api/cron/earnings-run",
+      "schedule": "0 13-21 * * 1-5"
+    }
+  ]
+}

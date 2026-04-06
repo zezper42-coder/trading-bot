@@ -1,0 +1,12 @@
+[
+  {
+    "id": "post-1",
+    "source": "x",
+    "author": "elonmusk",
+    "created_at": "2026-04-04T01:10:00Z",
+    "text": "Interesting times for TSLA",
+    "symbols": ["TSLA"],
+    "sentiment_score": 0.9,
+    "engagement_score": 1200
+  }
+]

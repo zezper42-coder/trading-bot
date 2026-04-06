@@ -1,0 +1,137 @@
+Metadata-Version: 2.4
+Name: trading-bot
+Version: 0.1.0
+Summary: A paper-trading bot for stocks and crypto.
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: alpaca-py>=0.42.0
+Requires-Dist: pytz>=2025.2
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: requests>=2.33.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.3.5; extra == "dev"
+
+# Trading Bot
+
+En event-drevet paper trading-bot for `TSLA` og `BTC/USD` på Alpaca.
+
+## Hva v1 gjør
+
+- Kjører strategien `news_shock` som standard
+- Handler kun på strukturerte overraskelser, ikke generelle positive headlines
+- Bruker:
+  - `Alpaca` for prisdata, konto, ordre og headline-kontekst
+  - `Finnhub` eller lokal JSON-feed for `actual vs expected`-hendelser
+- Går kun `long`
+- Bruker kort prisbekreftelse før entry
+- Bruker `1.5 x ATR(14)` hard stop og trailing stop
+- Flater `TSLA` før børsstenging og `BTC/USD` etter maks holdetid
+- Logger signaler og ordre til JSONL
+
+## Kom i gang
+
+1. Installer avhengigheter:
+
+```bash
+uv sync --no-editable --extra dev
+```
+
+2. Fyll inn Alpaca-nøkler i `.env`.
+
+3. Bruk file-replay først:
+
+```bash
+uv run trading-bot backtest --symbol TSLA --asset-class stock --days 5
+uv run trading-bot backtest --symbol BTC/USD --asset-class crypto --days 5
+```
+
+4. Kjør en live paper-runde:
+
+```bash
+uv run trading-bot run-once
+```
+
+5. Kjør kontinuerlig:
+
+```bash
+uv run trading-bot run-paper
+```
+
+Hvis Alpaca-kontoen din ikke har tilgang til nylig `SIP`-data for aksjer, bruk `ALPACA_STOCK_FEED=iex`. Det er satt som standard.
+
+## Standardoppsett
+
+`.env` er nå satt opp rundt disse standardene:
+
+- `BOT_STRATEGY=news_shock`
+- `BOT_SYMBOLS=TSLA:stock,BTC/USD:crypto`
+- `SURPRISE_PROVIDER=finnhub`
+- `STRUCTURED_EVENTS_PATH=examples/structured_events.json`
+- `BOT_DRY_RUN=true`
+
+Det betyr at boten kan testes uten Finnhub-nøkkel ved å bruke replay-filen.
+
+## Structured events
+
+`news_shock` leser denne formen:
+
+```json
+[
+  {
+    "event_id": "evt-1",
+    "source": "finnhub",
+    "instrument_scope": ["TSLA"],
+    "category": "earnings",
+    "published_at": "2026-04-04T12:20:00Z",
+    "headline": "TSLA beats expectations",
+    "actual_value": 1.5,
+    "expected_value": 1.2,
+    "surprise_score": 0.8,
+    "sentiment_score": 0.3,
+    "confidence_score": 0.9,
+    "is_scheduled": true
+  }
+]
+```
+
+Relevante env-variabler:
+
+- `SURPRISE_PROVIDER`
+- `FINNHUB_API_KEY`
+- `STRUCTURED_EVENTS_PATH`
+- `NEWS_SHOCK_MIN_SURPRISE`
+- `NEWS_SHOCK_MIN_CONFIDENCE`
+- `NEWS_SHOCK_MIN_SENTIMENT`
+- `NEWS_SHOCK_CONFIRMATION_BARS`
+- `NEWS_SHOCK_VOLUME_MULTIPLIER`
+- `NEWS_SHOCK_MAX_EVENT_AGE_SECONDS`
+- `NEWS_SHOCK_BTC_MAX_HOLD_MINUTES`
+- `NEWS_SHOCK_STOCK_FLATTEN_MINUTES_BEFORE_CLOSE`
+- `NEWS_SHOCK_TARGET_LEVERAGE`
+- `RISK_MAX_DAILY_LOSS_PCT`
+- `TRADE_LOG_PATH`
+
+## Design
+
+- `strategy.py`: `news_shock` entry/exit-logikk, ATR og trailing stop
+- `surprise_provider.py`: Finnhub-provider og event-joiner
+- `event_feed.py`: lokal replay-feed for structured events
+- `risk.py`: risk-based sizing med buying-power cap
+- `bot.py`: runtime-state, cooldown, kill switch, ordre- og signalflyt
+- `adapters/alpaca.py`: Alpaca bars, konto, ordre og headlines
+- `persistence.py`: JSONL-logg for signaler og ordre
+
+## Begrensninger i v1
+
+- Ingen short
+- Ingen sosial strategi i produksjonsløpet
+- Ingen reell `10x` execution på Alpaca
+- `target_leverage=10` lagres som strategiintensjon, men ordre capes til Alpaca-buying-power
+
+## Kilder
+
+- [Alpaca Trading API](https://docs.alpaca.markets/docs/trading-api)
+- [Alpaca Margin and Short Selling](https://docs.alpaca.markets/docs/margin-and-short-selling)
+- [Alpaca Crypto Spot Trading](https://docs.alpaca.markets/docs/crypto-trading)
+- [Alpaca Historical News Data](https://docs.alpaca.markets/v1.3/docs/historical-news-data)
+- [Alpaca Real-time News](https://docs.alpaca.markets/docs/streaming-real-time-news)

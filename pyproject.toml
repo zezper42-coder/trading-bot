@@ -1,0 +1,34 @@
+[project]
+name = "trading-bot"
+version = "0.1.0"
+description = "A paper-trading bot for stocks and crypto."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "alpaca-py>=0.42.0",
+  "pytz>=2025.2",
+  "python-dotenv>=1.0.1",
+  "requests>=2.33.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.5",
+]
+
+[project.scripts]
+trading-bot = "trading_bot.cli:main"
+
+[build-system]
+requires = ["setuptools>=80.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
