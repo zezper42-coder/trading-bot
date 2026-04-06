@@ -536,6 +536,34 @@ def _render_app_page() -> str:
       grid-template-columns: 1fr;
       gap: 18px;
     }
+    .help-panel {
+      margin: 10px 0 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.70);
+      display: none;
+    }
+    .help-panel.open {
+      display: block;
+    }
+    .help-panel h3 {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      letter-spacing: -0.01em;
+    }
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 14px;
+    }
+    .help-item {
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+    .help-item strong {
+      color: var(--ink);
+      margin-right: 6px;
+    }
     .settings-grid {
       display: grid;
       gap: 12px;
@@ -692,7 +720,27 @@ def _render_app_page() -> str:
               <h2>Risk &amp; Settings</h2>
               <p>Juster hvor god nyheten må være, per tema.</p>
             </div>
-            <button class="tiny-button" onclick="saveSettings()">Lagre settings</button>
+            <div class="footer-actions">
+              <button class="tiny-button" onclick="toggleSettingsHelp()">Forklar felt</button>
+              <button class="tiny-button" onclick="saveSettings()">Lagre settings</button>
+            </div>
+          </div>
+          <div id="settings-help" class="help-panel">
+            <h3>Kort forklaring av justerbare felt</h3>
+            <div class="help-grid">
+              <div class="help-item"><strong>På:</strong> Slår temaet av/på.</div>
+              <div class="help-item"><strong>Min surprise:</strong> Minste nyhets-overraskelse før vurdering.</div>
+              <div class="help-item"><strong>Min confidence:</strong> Minste tillit til eventet.</div>
+              <div class="help-item"><strong>Min sentiment:</strong> Minste positiv/negativ tone.</div>
+              <div class="help-item"><strong>Min kilder:</strong> Minste antall støttende kilder.</div>
+              <div class="help-item"><strong>Bars:</strong> Antall bekreftelsesbarer før entry.</div>
+              <div class="help-item"><strong>Volum:</strong> Volumkrav mot normalvolum.</div>
+              <div class="help-item"><strong>Max age:</strong> Maks alder på event i sekunder.</div>
+              <div class="help-item"><strong>Risk/trade:</strong> Risikoandel per trade.</div>
+              <div class="help-item"><strong>Risk min:</strong> Laveste risikomultiplikator.</div>
+              <div class="help-item"><strong>Risk max:</strong> Høyeste risikomultiplikator.</div>
+              <div class="help-item"><strong>Trade score:</strong> Minste totalscore for trade.</div>
+            </div>
           </div>
           <div id="settings-grid" class="settings-grid"></div>
         </section>
@@ -961,6 +1009,11 @@ def _render_app_page() -> str:
     async function logout() {
       await api("/api/ui/logout", { method: "POST", body: JSON.stringify({}) });
       window.location.reload();
+    }
+
+    function toggleSettingsHelp() {
+      const panel = document.getElementById("settings-help");
+      panel.classList.toggle("open");
     }
 
     let pollingTimer = null;
