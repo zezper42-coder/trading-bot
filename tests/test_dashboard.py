@@ -1,6 +1,7 @@
 from trading_bot.config import load_config
 from trading_bot.dashboard import (
     build_settings_payload,
+    build_dashboard_stream_payload,
     dashboard_logout_cookie,
     dashboard_session_cookie,
     render_dashboard_page,
@@ -35,3 +36,16 @@ def test_build_settings_payload_includes_oil_policy(monkeypatch) -> None:
     themes = {item["theme"] for item in settings}
     assert "oil_policy" in themes
     assert "earnings_surprise" in themes
+
+
+def test_build_dashboard_stream_payload_has_sections(monkeypatch) -> None:
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    payload = build_dashboard_stream_payload(load_config())
+
+    assert "state" in payload
+    assert "positions" in payload
+    assert "signals" in payload
+    assert "orders" in payload
+    assert "events" in payload
+    assert "settings" in payload

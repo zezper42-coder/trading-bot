@@ -82,6 +82,18 @@ def build_dashboard_state_payload(config: BotConfig) -> dict[str, Any]:
     }
 
 
+def build_dashboard_stream_payload(config: BotConfig) -> dict[str, Any]:
+    state_store = build_state_store(config)
+    return {
+        "state": build_dashboard_state_payload(config),
+        "positions": {"ok": True, "rows": build_positions_payload(config)},
+        "signals": {"ok": True, "rows": state_store.list_recent_signals()},
+        "orders": {"ok": True, "rows": state_store.list_recent_orders()},
+        "events": {"ok": True, "rows": state_store.list_recent_events()},
+        "settings": {"ok": True, "rows": build_settings_payload(config)},
+    }
+
+
 def build_positions_payload(config: BotConfig, *, broker=None) -> list[dict[str, Any]]:
     from trading_bot.cli import build_broker
 
@@ -941,10 +953,54 @@ def _render_app_page() -> str:
       window.location.reload();
     }
 
-    refreshAll().catch((error) => {
+    let pollingTimer = null;
+    let eventSource = null;
+
+    function applySnapshot(snapshot) {
+      if (!snapshot) return;
+      if (snapshot.state) renderOverview(snapshot.state);
+      if (snapshot.positions) renderPositions(snapshot.positions.rows || []);
+      if (snapshot.signals) renderSignals(snapshot.signals.rows || []);
+      if (snapshot.orders) renderOrders(snapshot.orders.rows || []);
+      if (snapshot.events) renderEvents(snapshot.events.rows || []);
+      if (snapshot.settings) renderSettings(snapshot.settings.rows || []);
+    }
+
+    function startPollingFallback() {
+      if (pollingTimer) return;
+      pollingTimer = setInterval(() => refreshAll().catch(() => {}), 5000);
+    }
+
+    function stopPollingFallback() {
+      if (!pollingTimer) return;
+      clearInterval(pollingTimer);
+      pollingTimer = null;
+    }
+
+    function startLiveStream() {
+      if (typeof EventSource === "undefined") {
+        startPollingFallback();
+        return;
+      }
+      eventSource = new EventSource("/api/ui/stream", { withCredentials: true });
+      eventSource.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data || "{}");
+          applySnapshot(parsed.payload);
+          stopPollingFallback();
+        } catch (_) {}
+      };
+      eventSource.onerror = () => {
+        startPollingFallback();
+      };
+    }
+
+    refreshAll().then(() => {
+      startLiveStream();
+    }).catch((error) => {
       alert(error.message);
+      startPollingFallback();
     });
-    setInterval(() => refreshAll().catch(() => {}), 5000);
   </script>
 </body>
 </html>"""

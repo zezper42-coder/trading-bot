@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone
 from html import escape
 from http.server import BaseHTTPRequestHandler
@@ -17,6 +18,7 @@ if str(SRC) not in sys.path:
 from trading_bot.config import load_config
 from trading_bot.dashboard import (
     build_dashboard_state_payload,
+    build_dashboard_stream_payload,
     build_positions_payload,
     build_settings_payload,
     dashboard_logout_cookie,
@@ -133,6 +135,9 @@ class handler(BaseHTTPRequestHandler):
         config = load_config()
         if not self._require_ui_auth(config):
             return
+        if path == "/api/ui/stream":
+            self._handle_ui_stream(config)
+            return
         state_store = build_state_store(config)
 
         if path == "/api/ui/state":
@@ -154,6 +159,30 @@ class handler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, "rows": build_settings_payload(config)})
             return
         self._send_json(404, {"ok": False, "error": "Unknown dashboard endpoint."})
+
+    def _handle_ui_stream(self, config) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "keep-alive")
+        self.end_headers()
+        try:
+            self.wfile.write(b"retry: 2000\n\n")
+            self.wfile.flush()
+            for seq in range(120):
+                payload = {
+                    "ok": True,
+                    "seq": seq,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "payload": build_dashboard_stream_payload(config),
+                }
+                body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
+                self.wfile.write(b"event: snapshot\n")
+                self.wfile.write(b"data: " + body + b"\n\n")
+                self.wfile.flush()
+                time.sleep(2)
+        except (BrokenPipeError, ConnectionResetError):
+            return
 
     def _handle_ui_post(self, path: str) -> None:
         config = load_config()
